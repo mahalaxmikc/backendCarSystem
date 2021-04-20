@@ -14,6 +14,7 @@ import javax.validation.Valid;
 
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -82,6 +83,8 @@ class CarController {
         Car currentCar = carService.save(car);
         Resource<Car> resource = assembler.toResource(currentCar);
         return ResponseEntity.created(new URI(resource.getId().expand().getHref())).body(resource);
+
+
     }
 
     /**
@@ -98,10 +101,16 @@ class CarController {
          * TODO: Use the `assembler` on that updated car and return as part of the response.
          *   Update the first line as part of the above implementing.
          */
-        car.setId(id);
-        Car currentCar = carService.save(car);
-        Resource<Car> resource = assembler.toResource(currentCar);
-        return ResponseEntity.ok(resource);
+
+
+        Car currentCar = carService.findById(id);
+        if (currentCar != null) {
+            car.setId(id);
+            Resource<Car> resource = assembler.toResource(carService.save(car));
+            return ResponseEntity.ok(resource);
+        } else {
+            return new ResponseEntity<>(id, HttpStatus.NOT_FOUND);
+        }
     }
 
     /**
@@ -114,7 +123,14 @@ class CarController {
         /**
          * TODO: Use the Car Service to delete the requested vehicle.
          */
-        carService.delete(id);
-        return ResponseEntity.noContent().build();
+
+        Car deleteCar = carService.findById(id);
+        if (deleteCar != null) {
+            carService.delete(id);
+            return new ResponseEntity<>(id, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(id, HttpStatus.NOT_FOUND);
+        }
+
     }
 }
